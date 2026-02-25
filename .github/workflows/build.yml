@@ -98,6 +98,10 @@ jobs:
               resolve_or_drop_pkg flatpak
               resolve_or_drop_pkg paru-bin paru paru-git pamac
               resolve_or_drop_pkg conky conky-lua conky-git
+              resolve_or_drop_pkg snapper
+              resolve_or_drop_pkg snap-pac snap-pac-git
+              resolve_or_drop_pkg grub-btrfs
+              resolve_or_drop_pkg btrfs-progs
 
               # Build-time pacman profile for non-v4 GitHub runners.
               printf "%s\n" \

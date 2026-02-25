@@ -34,3 +34,7 @@ gamemode
 flatpak
 paru-bin
 conky
+snapper
+snap-pac
+grub-btrfs
+btrfs-progs

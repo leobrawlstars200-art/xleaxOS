@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v snapper >/dev/null 2>&1; then
+  exit 0
+fi
+
+if [ "$(findmnt -n -o FSTYPE / 2>/dev/null || true)" != "btrfs" ]; then
+  exit 0
+fi
+
+if [ ! -f /etc/snapper/configs/root ]; then
+  mkdir -p /.snapshots
+  snapper --no-dbus -c root create-config /
+fi
+
+snapper --no-dbus -c root create \
+  --type single \
+  --cleanup-algorithm number \
+  --description "xleax pre pacman transaction"

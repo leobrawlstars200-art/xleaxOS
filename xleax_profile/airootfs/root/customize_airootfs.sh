@@ -26,6 +26,9 @@ enable_if_present gdm.service
 enable_if_present xleax-gpu-boost.service
 enable_if_present ananicy-cpp.service
 enable_if_present scx_loader.service
+enable_if_present snapper-cleanup.timer
+enable_if_present grub-btrfs.path
+enable_if_present btrfs-scrub@-.timer
 enable_user_if_present xleax-ghost.service
 
 cat > /etc/locale.gen <<'EOF'
