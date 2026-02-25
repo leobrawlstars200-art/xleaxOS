@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+required_flags=(avx512f avx512bw avx512cd avx512dq avx512vl)
+for flag in "${required_flags[@]}"; do
+  if ! grep -qw "$flag" /proc/cpuinfo; then
+    echo "xleaxOS v4 check: CPU does not expose required flag: $flag"
+    exit 1
+  fi
+done
+
+if /lib/ld-linux-x86-64.so.2 --help 2>/dev/null | grep -q "x86-64-v4 (supported, searched)"; then
+  echo "xleaxOS v4 check: x86-64-v4 optimized runtime paths are active."
+  exit 0
+fi
+
+echo "xleaxOS v4 check: x86-64-v4 optimized runtime paths are not active."
+exit 1

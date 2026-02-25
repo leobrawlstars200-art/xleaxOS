@@ -1,0 +1,12 @@
+[Unit]
+Description=xleaxOS x86-64-v4 runtime validation
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/check-v4
+StandardOutput=journal+console
+StandardError=journal+console
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

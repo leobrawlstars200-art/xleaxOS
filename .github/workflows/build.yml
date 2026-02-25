@@ -23,7 +23,44 @@ jobs:
             -w /work \
             archlinux:latest /bin/bash -lc '
               set -euo pipefail
-              pacman -Syu --noconfirm archiso grub
+
+              retry() {
+                local attempts=0
+                until "$@"; do
+                  attempts=$((attempts + 1))
+                  if [ "$attempts" -ge 3 ]; then
+                    return 1
+                  fi
+                  sleep 5
+                done
+              }
+
+              pacman -Syu --noconfirm archlinux-keyring curl gnupg archiso grub
+              pacman-key --init
+              pacman-key --populate archlinux
+
+              retry pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+              pacman-key --lsign-key F3B607488DB35A47
+
+              cachyos_index="$(curl -fsSL https://mirror.cachyos.org/repo/x86_64/cachyos/)"
+              cachyos_keyring_pkg="$(printf "%s" "$cachyos_index" | grep -o "cachyos-keyring-[^\" ]*pkg\\.tar\\.zst" | head -n1)"
+              cachyos_mirrorlist_pkg="$(printf "%s" "$cachyos_index" | grep -o "cachyos-mirrorlist-[^\" ]*pkg\\.tar\\.zst" | head -n1)"
+              cachyos_v4_mirrorlist_pkg="$(printf "%s" "$cachyos_index" | grep -o "cachyos-v4-mirrorlist-[^\" ]*pkg\\.tar\\.zst" | head -n1)"
+              test -n "$cachyos_keyring_pkg"
+              test -n "$cachyos_mirrorlist_pkg"
+              test -n "$cachyos_v4_mirrorlist_pkg"
+              pacman -U --noconfirm \
+                "https://mirror.cachyos.org/repo/x86_64/cachyos/${cachyos_keyring_pkg}" \
+                "https://mirror.cachyos.org/repo/x86_64/cachyos/${cachyos_mirrorlist_pkg}" \
+                "https://mirror.cachyos.org/repo/x86_64/cachyos/${cachyos_v4_mirrorlist_pkg}"
+
+              retry pacman-key --recv-keys 3056513887B78AEB --keyserver keyserver.ubuntu.com
+              pacman-key --lsign-key 3056513887B78AEB
+              pacman -U --noconfirm \
+                "https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst" \
+                "https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst"
+              pacman-key --populate chaotic
+
               cp -a /usr/share/archiso/configs/baseline /tmp/xleax_profile
               cp -a /work/xleax_profile/. /tmp/xleax_profile/
               mkarchiso -v -w /tmp/archiso-work -o /work/out /tmp/xleax_profile
