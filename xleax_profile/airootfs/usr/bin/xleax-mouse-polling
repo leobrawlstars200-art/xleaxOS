@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+devpath="${1:-}"
+[[ -n "${devpath}" ]] || exit 0
+
+# Force global HID mouse polling to 1000Hz (1ms) where supported.
+if [[ -w /sys/module/usbhid/parameters/mousepoll ]]; then
+  echo 1 > /sys/module/usbhid/parameters/mousepoll || true
+fi
+
+sysdev="/sys${devpath}"
+
+# Walk up to the USB device and disable runtime power saving on the mouse path.
+while [[ "${sysdev}" != "/" ]]; do
+  if [[ -f "${sysdev}/idVendor" && -f "${sysdev}/idProduct" ]]; then
+    [[ -w "${sysdev}/power/control" ]] && echo on > "${sysdev}/power/control" || true
+    [[ -w "${sysdev}/power/autosuspend_delay_ms" ]] && echo -1 > "${sysdev}/power/autosuspend_delay_ms" || true
+    [[ -w "${sysdev}/power/wakeup" ]] && echo disabled > "${sysdev}/power/wakeup" || true
+    break
+  fi
+  sysdev="$(dirname "${sysdev}")"
+done
+
+# Best effort: if the device exposes a writable polling interval, request the fastest mode.
+for p in \
+  "/sys${devpath}/device/poll_interval" \
+  "/sys${devpath}/device/device/poll_interval" \
+  "/sys${devpath}/poll_interval"; do
+  if [[ -w "${p}" ]]; then
+    echo 1 > "${p}" 2>/dev/null || true
+  fi
+done

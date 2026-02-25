@@ -9,6 +9,7 @@ echo "arch:arch" | chpasswd
 
 systemctl set-default graphical.target
 systemctl enable gdm.service
+systemctl enable xleax-gpu-boost.service
 
 if command -v dconf >/dev/null 2>&1; then
   dconf update

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+for card in /sys/class/drm/card[0-9]*; do
+  [[ -d "${card}" ]] || continue
+  dev="${card}/device"
+  [[ -d "${dev}" ]] || continue
+
+  # Keep GPUs in active power mode to avoid wake stutter.
+  [[ -w "${dev}/power/control" ]] && echo on > "${dev}/power/control" || true
+  [[ -w "${dev}/power/autosuspend_delay_ms" ]] && echo -1 > "${dev}/power/autosuspend_delay_ms" || true
+  [[ -w "${dev}/d3cold_allowed" ]] && echo 0 > "${dev}/d3cold_allowed" || true
+
+  vendor="$(cat "${dev}/vendor" 2>/dev/null || true)"
+  case "${vendor}" in
+    0x1002)
+      [[ -w "${dev}/power_dpm_force_performance_level" ]] && echo performance > "${dev}/power_dpm_force_performance_level" || true
+      [[ -w "${dev}/power_dpm_force_performance_level" ]] && echo high > "${dev}/power_dpm_force_performance_level" || true
+      ;;
+    0x8086)
+      if [[ -w "${card}/gt_min_freq_mhz" && -r "${card}/gt_max_freq_mhz" ]]; then
+        cat "${card}/gt_max_freq_mhz" > "${card}/gt_min_freq_mhz" 2>/dev/null || true
+      fi
+      for gt in "${card}"/gt/gt*; do
+        [[ -d "${gt}" ]] || continue
+        if [[ -w "${gt}/rps_min_freq_mhz" && -r "${gt}/rps_max_freq_mhz" ]]; then
+          cat "${gt}/rps_max_freq_mhz" > "${gt}/rps_min_freq_mhz" 2>/dev/null || true
+        fi
+      done
+      ;;
+    0x10de)
+      # nvidia-open + nvidia modules consume this PCI/runtime power policy.
+      [[ -w "${dev}/power/control" ]] && echo on > "${dev}/power/control" || true
+      ;;
+  esac
+done

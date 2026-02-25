@@ -65,6 +65,12 @@ jobs:
               cp -a /work/xleax_profile/. /tmp/xleax_profile/
               rm -f /tmp/xleax_profile/airootfs/etc/mkinitcpio.d/linux.preset || true
 
+              if ! pacman -Sp --noconfirm mesa-git >/dev/null 2>&1; then
+                if pacman -Sp --noconfirm mesa-tkg-git >/dev/null 2>&1; then
+                  sed -i "s/^mesa-git$/mesa-tkg-git/" /tmp/xleax_profile/packages.x86_64
+                fi
+              fi
+
               # Build-time pacman profile for non-v4 GitHub runners.
               printf "%s\n" \
                 "[options]" \

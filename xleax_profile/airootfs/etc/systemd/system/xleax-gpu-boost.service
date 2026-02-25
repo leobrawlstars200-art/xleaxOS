@@ -1,0 +1,12 @@
+[Unit]
+Description=xleaxOS GPU Performance Boost
+After=systemd-udev-settle.service
+Wants=systemd-udev-settle.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/xleax-gpu-boost
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

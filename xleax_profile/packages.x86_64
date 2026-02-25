@@ -8,6 +8,10 @@ mkinitcpio-archiso
 gnome
 gdm
 mutter-performance
+nvidia-open-dkms
+mesa-git
+libinput
+xorg-xwayland
 cachyos-keyring
 cachyos-mirrorlist
 cachyos-v4-mirrorlist
