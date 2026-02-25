@@ -86,6 +86,9 @@ jobs:
               resolve_or_drop_pkg qt5-svg qt5-base
               resolve_or_drop_pkg qt5-xmlpatterns qt5-tools
               resolve_or_drop_pkg polkit-gnome lxqt-policykit polkit
+              resolve_or_drop_pkg linux-cachyos-bore linux-cachyos linux
+              resolve_or_drop_pkg mutter-performance mutter
+              resolve_or_drop_pkg nvidia-open-dkms nvidia-dkms nvidia-open
               resolve_or_drop_pkg ananicy-cpp ananicy-cpp-git
               resolve_or_drop_pkg ananicy-cpp-rules ananicy-rules-git ananicy-cpp-rules-git
               resolve_or_drop_pkg scx-scheds scx-scheds-git scx
@@ -120,6 +123,8 @@ jobs:
               resolve_or_drop_pkg intel-ucode
               resolve_or_drop_pkg amd-ucode
               resolve_or_drop_pkg fwupd
+              awk "NF && !seen[\$0]++" /tmp/xleax_profile/packages.x86_64 > /tmp/xleax_profile/packages.x86_64.tmp
+              mv /tmp/xleax_profile/packages.x86_64.tmp /tmp/xleax_profile/packages.x86_64
 
               # Build-time pacman profile for non-v4 GitHub runners.
               printf "%s\n" \

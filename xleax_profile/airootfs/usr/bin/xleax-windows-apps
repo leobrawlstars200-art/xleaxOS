@@ -37,27 +37,53 @@ if [ -n "${2:-}" ]; then
   VM_NAME="$2"
 fi
 
+pick_default_gpu() {
+  local dev class boot_vga
+
+  for dev in /sys/bus/pci/devices/*; do
+    [ -e "$dev/class" ] || continue
+    class="$(cat "$dev/class" 2>/dev/null || true)"
+    case "$class" in
+      0x030000|0x030200)
+        boot_vga="$(cat "$dev/boot_vga" 2>/dev/null || echo 0)"
+        if [ "$boot_vga" != "1" ]; then
+          basename "$dev"
+          return 0
+        fi
+        ;;
+    esac
+  done
+
+  for dev in /sys/bus/pci/devices/*; do
+    [ -e "$dev/class" ] || continue
+    class="$(cat "$dev/class" 2>/dev/null || true)"
+    case "$class" in
+      0x030000|0x030200)
+        basename "$dev"
+        return 0
+        ;;
+    esac
+  done
+
+  return 1
+}
+
 get_device_list() {
-  if [ -n "$VFIO_PCI_DEVICES" ]; then
+  local audio selected
+
+  if [ -n "${VFIO_PCI_DEVICES// }" ]; then
     printf '%s\n' "$VFIO_PCI_DEVICES" | tr ', ' '\n\n' | awk 'NF' | sort -u
     return
   fi
 
-  local dev class bdf audio
-  for dev in /sys/bus/pci/devices/*; do
-    [ -e "$dev/class" ] || continue
-    class="$(cat "$dev/class")"
-    case "$class" in
-      0x030000|0x030200)
-        bdf="$(basename "$dev")"
-        printf '%s\n' "$bdf"
-        audio="${bdf%.*}.1"
-        if [ -e "/sys/bus/pci/devices/$audio/class" ] && grep -qi '^0x0403' "/sys/bus/pci/devices/$audio/class"; then
-          printf '%s\n' "$audio"
-        fi
-        ;;
-    esac
-  done | sort -u
+  selected="$(pick_default_gpu 2>/dev/null || true)"
+  [ -n "$selected" ] || return 0
+
+  printf '%s\n' "$selected"
+  audio="${selected%.*}.1"
+  if [ -e "/sys/bus/pci/devices/$audio/class" ] && grep -qi '^0x0403' "/sys/bus/pci/devices/$audio/class"; then
+    printf '%s\n' "$audio"
+  fi
 }
 
 bind_to_vfio() {
@@ -69,8 +95,14 @@ bind_to_vfio() {
     echo "$bdf" > "/sys/bus/pci/drivers/$driver/unbind" 2>/dev/null || true
   fi
 
-  echo vfio-pci > "$dev/driver_override"
-  echo "$bdf" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null || true
+  if ! echo vfio-pci > "$dev/driver_override"; then
+    return 1
+  fi
+  if ! echo "$bdf" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null; then
+    return 1
+  fi
+
+  return 0
 }
 
 rebind_from_vfio() {
@@ -109,8 +141,36 @@ restore_local_display() {
   fi
 }
 
+rollback_start() {
+  local display_disabled="${1:-0}"
+  shift || true
+  local bdf
+
+  for bdf in "$@"; do
+    [ -n "$bdf" ] || continue
+    rebind_from_vfio "$bdf"
+  done
+
+  if [ "$display_disabled" -eq 1 ]; then
+    restore_local_display
+  fi
+}
+
 start_vm() {
-  local devices
+  local -a devices=()
+  local -a bound_devices=()
+  local bdf
+  local display_disabled=0
+
+  if ! command -v virsh >/dev/null 2>&1; then
+    echo "xleax-windows-apps: virsh is not installed." >&2
+    exit 3
+  fi
+  if ! virsh dominfo "$VM_NAME" >/dev/null 2>&1; then
+    echo "xleax-windows-apps: VM '$VM_NAME' does not exist." >&2
+    exit 3
+  fi
+
   mapfile -t devices < <(get_device_list)
   if [ "${#devices[@]}" -eq 0 ]; then
     echo "xleax-windows-apps: no passthrough GPU devices detected." >&2
@@ -122,17 +182,29 @@ start_vm() {
   modprobe vfio-pci
 
   disable_local_display
+  display_disabled=1
 
+  for bdf in "${devices[@]}"; do
+    if bind_to_vfio "$bdf"; then
+      bound_devices+=("$bdf")
+    else
+      rollback_start "$display_disabled" "${bound_devices[@]}"
+      echo "xleax-windows-apps: failed to bind $bdf to vfio-pci." >&2
+      exit 4
+    fi
+  done
+
+  if ! virsh start "$VM_NAME"; then
+    rollback_start "$display_disabled" "${bound_devices[@]}"
+    echo "xleax-windows-apps: failed to start VM '$VM_NAME'." >&2
+    exit 5
+  fi
+
+  mkdir -p "$(dirname "$STATE_FILE")"
   : > "$STATE_FILE"
   printf 'VM_NAME=%s\n' "$VM_NAME" >> "$STATE_FILE"
   printf 'DEVICES=%s\n' "${devices[*]}" >> "$STATE_FILE"
 
-  local bdf
-  for bdf in "${devices[@]}"; do
-    bind_to_vfio "$bdf"
-  done
-
-  virsh start "$VM_NAME"
   echo "xleax-windows-apps: VM $VM_NAME started with VFIO GPU passthrough."
 }
 

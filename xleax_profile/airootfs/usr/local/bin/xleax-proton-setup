@@ -13,6 +13,17 @@ compat_dir="$steam_dir/compatibilitytools.d"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/xleax"
 stamp_file="$state_dir/proton-ge-latest.stamp"
 
+retry() {
+  local attempts=0
+  until "$@"; do
+    attempts=$((attempts + 1))
+    if [ "$attempts" -ge 3 ]; then
+      return 1
+    fi
+    sleep 2
+  done
+}
+
 mkdir -p "$compat_dir" "$state_dir"
 
 if [ -f "$stamp_file" ]; then
@@ -22,15 +33,18 @@ if [ -f "$stamp_file" ]; then
   fi
 fi
 
-release_json="$(curl -fsSL \
+if ! release_json="$(retry curl -fsSL \
   -H 'Accept: application/vnd.github+json' \
   -H 'User-Agent: xleaxOS-proton-setup' \
-  "$repo_api")"
+  "$repo_api")"; then
+  echo "xleax-proton-setup: release lookup failed, skipping for this session." >&2
+  exit 0
+fi
 asset_url="$(printf '%s\n' "$release_json" | grep -Eo 'https://[^"]+/GE-Proton[^"]+\.tar\.gz' | head -n1 || true)"
 
 if [ -z "$asset_url" ]; then
-  echo "xleax-proton-setup: could not locate a Proton-GE release asset." >&2
-  exit 1
+  echo "xleax-proton-setup: no Proton-GE asset found, skipping." >&2
+  exit 0
 fi
 
 asset_name="${asset_url##*/}"
@@ -44,8 +58,14 @@ fi
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
-curl -fL "$asset_url" -o "$tmp_dir/$asset_name"
-tar -xzf "$tmp_dir/$asset_name" -C "$compat_dir"
+if ! retry curl -fL "$asset_url" -o "$tmp_dir/$asset_name"; then
+  echo "xleax-proton-setup: download failed, skipping for this session." >&2
+  exit 0
+fi
+if ! tar -xzf "$tmp_dir/$asset_name" -C "$compat_dir"; then
+  echo "xleax-proton-setup: extraction failed, skipping for this session." >&2
+  exit 0
+fi
 
 if [ -d "$compat_dir/$proton_dir" ]; then
   printf '%s\n' "$proton_dir" > "$stamp_file"
@@ -53,4 +73,4 @@ if [ -d "$compat_dir/$proton_dir" ]; then
 fi
 
 echo "xleax-proton-setup: extraction finished but $proton_dir is missing." >&2
-exit 1
+exit 0

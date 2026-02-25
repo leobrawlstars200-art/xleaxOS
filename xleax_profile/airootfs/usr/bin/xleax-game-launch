@@ -7,10 +7,25 @@ if [ "$#" -lt 1 ]; then
   exit 64
 fi
 
+# Optional host trim only when already running as root.
 if [ "$(id -u)" -eq 0 ]; then
   fstrim -v / >/dev/null 2>&1 || true
-else
-  pkexec /usr/bin/fstrim -v / >/dev/null 2>&1 || true
 fi
 
-exec gamescope -W 1920 -H 1080 -r 144 -- mangohud gamemoderun "$@"
+GS_WIDTH="${XLEAX_GS_WIDTH:-1920}"
+GS_HEIGHT="${XLEAX_GS_HEIGHT:-1080}"
+GS_REFRESH="${XLEAX_GS_REFRESH:-144}"
+
+launch_cmd=("$@")
+if command -v gamemoderun >/dev/null 2>&1; then
+  launch_cmd=(gamemoderun "${launch_cmd[@]}")
+fi
+if command -v mangohud >/dev/null 2>&1; then
+  launch_cmd=(mangohud "${launch_cmd[@]}")
+fi
+
+if command -v gamescope >/dev/null 2>&1; then
+  exec gamescope -W "$GS_WIDTH" -H "$GS_HEIGHT" -r "$GS_REFRESH" -- "${launch_cmd[@]}"
+fi
+
+exec "${launch_cmd[@]}"

@@ -15,8 +15,8 @@ done
 
 enable_if_present() {
   local unit="$1"
-  if systemctl list-unit-files "$unit" --no-legend >/dev/null 2>&1; then
-    systemctl enable "$unit"
+  if systemctl cat "$unit" >/dev/null 2>&1; then
+    systemctl enable "$unit" || true
   fi
 }
 
@@ -33,9 +33,12 @@ enable_if_present xleax-gpu-boost.service
 enable_if_present ananicy-cpp.service
 enable_if_present scx_loader.service
 enable_if_present libvirtd.service
+enable_if_present virtqemud.service
+enable_if_present virtnetworkd.service
 enable_if_present virtlogd.socket
 enable_if_present virtlockd.socket
 enable_if_present snapper-cleanup.timer
+enable_if_present snapper-timeline.timer
 enable_if_present grub-btrfs.path
 enable_if_present btrfs-scrub@-.timer
 enable_user_if_present xleax-ghost.service
