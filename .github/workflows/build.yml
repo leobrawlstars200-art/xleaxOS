@@ -88,6 +88,13 @@ jobs:
               resolve_or_drop_pkg ananicy-cpp ananicy-cpp-git
               resolve_or_drop_pkg ananicy-cpp-rules ananicy-rules-git ananicy-cpp-rules-git
               resolve_or_drop_pkg scx-scheds scx-scheds-git scx
+              resolve_or_drop_pkg steam steam-native-runtime
+              resolve_or_drop_pkg steam-native-runtime steam
+              resolve_or_drop_pkg gamescope gamescope-git
+              resolve_or_drop_pkg mangohud mangohud-git
+              resolve_or_drop_pkg lib32-mangohud mangohud
+              resolve_or_drop_pkg goverlay goverlay-bin goverlay-git
+              resolve_or_drop_pkg gamemode gamemode-git
 
               # Build-time pacman profile for non-v4 GitHub runners.
               printf "%s\n" \
@@ -107,6 +114,9 @@ jobs:
                 "Include = /etc/pacman.d/mirrorlist" \
                 "" \
                 "[extra]" \
+                "Include = /etc/pacman.d/mirrorlist" \
+                "" \
+                "[multilib]" \
                 "Include = /etc/pacman.d/mirrorlist" \
                 "" \
                 "[chaotic-aur]" \

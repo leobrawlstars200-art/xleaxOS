@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "$#" -lt 1 ]; then
+  echo "Usage: xleax-game-launch <game command> [args...]" >&2
+  echo "Steam launch option: xleax-game-launch %command%" >&2
+  exit 64
+fi
+
+if [ "$(id -u)" -eq 0 ]; then
+  fstrim -v / >/dev/null 2>&1 || true
+else
+  pkexec /usr/bin/fstrim -v / >/dev/null 2>&1 || true
+fi
+
+exec gamescope -W 1920 -H 1080 -r 144 -- mangohud gamemoderun "$@"

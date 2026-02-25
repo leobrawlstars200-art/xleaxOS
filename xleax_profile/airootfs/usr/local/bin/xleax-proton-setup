@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_api="https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest"
+steam_dir_default="${XDG_DATA_HOME:-$HOME/.local/share}/Steam"
+steam_dir_alt="$HOME/.steam/root"
+steam_dir="$steam_dir_default"
+if [ -d "$steam_dir_alt" ]; then
+  steam_dir="$steam_dir_alt"
+fi
+
+compat_dir="$steam_dir/compatibilitytools.d"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/xleax"
+stamp_file="$state_dir/proton-ge-latest.stamp"
+
+mkdir -p "$compat_dir" "$state_dir"
+
+if [ -f "$stamp_file" ]; then
+  current="$(cat "$stamp_file" 2>/dev/null || true)"
+  if [ -n "$current" ] && [ -d "$compat_dir/$current" ]; then
+    exit 0
+  fi
+fi
+
+release_json="$(curl -fsSL \
+  -H 'Accept: application/vnd.github+json' \
+  -H 'User-Agent: xleaxOS-proton-setup' \
+  "$repo_api")"
+asset_url="$(printf '%s\n' "$release_json" | grep -Eo 'https://[^"]+/GE-Proton[^"]+\.tar\.gz' | head -n1 || true)"
+
+if [ -z "$asset_url" ]; then
+  echo "xleax-proton-setup: could not locate a Proton-GE release asset." >&2
+  exit 1
+fi
+
+asset_name="${asset_url##*/}"
+proton_dir="${asset_name%.tar.gz}"
+
+if [ -d "$compat_dir/$proton_dir" ]; then
+  printf '%s\n' "$proton_dir" > "$stamp_file"
+  exit 0
+fi
+
+tmp_dir="$(mktemp -d)"
+trap 'rm -rf "$tmp_dir"' EXIT
+
+curl -fL "$asset_url" -o "$tmp_dir/$asset_name"
+tar -xzf "$tmp_dir/$asset_name" -C "$compat_dir"
+
+if [ -d "$compat_dir/$proton_dir" ]; then
+  printf '%s\n' "$proton_dir" > "$stamp_file"
+  exit 0
+fi
+
+echo "xleax-proton-setup: extraction finished but $proton_dir is missing." >&2
+exit 1
