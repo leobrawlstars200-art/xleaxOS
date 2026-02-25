@@ -35,12 +35,29 @@ jobs:
                 done
               }
 
+              import_and_trust_key() {
+                local key_id="$1"
+                local key_blob=""
+
+                key_blob="$(curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${key_id}" 2>/dev/null || true)"
+                if [ -z "$key_blob" ]; then
+                  key_blob="$(curl -fsSL "https://keys.openpgp.org/pks/lookup?op=get&search=0x${key_id}" 2>/dev/null || true)"
+                fi
+
+                if [ -n "$key_blob" ]; then
+                  printf "%s" "$key_blob" | pacman-key --add -
+                else
+                  retry pacman-key --recv-keys "$key_id" --keyserver keyserver.ubuntu.com
+                fi
+
+                pacman-key --lsign-key "$key_id"
+              }
+
               pacman -Syu --noconfirm archlinux-keyring curl gnupg archiso grub
               pacman-key --init
               pacman-key --populate archlinux
 
-              retry pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
-              pacman-key --lsign-key F3B607488DB35A47
+              import_and_trust_key F3B607488DB35A47
 
               cachyos_index="$(curl -fsSL https://mirror.cachyos.org/repo/x86_64/cachyos/)"
               cachyos_keyring_pkg="$(printf "%s" "$cachyos_index" | grep -o "cachyos-keyring-[^\" ]*pkg\\.tar\\.zst" | head -n1)"
@@ -54,8 +71,7 @@ jobs:
                 "https://mirror.cachyos.org/repo/x86_64/cachyos/${cachyos_mirrorlist_pkg}" \
                 "https://mirror.cachyos.org/repo/x86_64/cachyos/${cachyos_v4_mirrorlist_pkg}"
 
-              retry pacman-key --recv-keys 3056513887B78AEB --keyserver keyserver.ubuntu.com
-              pacman-key --lsign-key 3056513887B78AEB
+              import_and_trust_key 3056513887B78AEB
               pacman -U --noconfirm \
                 "https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst" \
                 "https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst"
