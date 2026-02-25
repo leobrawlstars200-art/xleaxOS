@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Fortnite (Windows VM)
+Comment=Start Fortnite through the WindowsApps VM engine
+Exec=pkexec /usr/bin/xleax-windows-apps start fortnite
+Icon=applications-games
+Terminal=false
+Categories=Game;
+Keywords=Fortnite;WindowsApps;VM;Windows;Epic;
+StartupNotify=true

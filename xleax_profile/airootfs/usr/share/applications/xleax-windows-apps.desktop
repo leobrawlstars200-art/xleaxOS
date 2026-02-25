@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=WindowsApps
+Comment=Launch the WindowsApps high-performance VM stack
+Exec=pkexec /usr/bin/xleax-windows-apps start windowsapps
+Icon=computer
+Terminal=false
+Categories=Game;System;
+Keywords=WindowsApps;Windows;VM;VirtualMachine;Fortnite;Gaming;
+StartupNotify=true

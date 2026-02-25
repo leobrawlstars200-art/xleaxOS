@@ -7,6 +7,12 @@ fi
 
 echo "arch:arch" | chpasswd
 
+for grp in libvirt kvm; do
+  if getent group "$grp" >/dev/null 2>&1; then
+    usermod -aG "$grp" arch || true
+  fi
+done
+
 enable_if_present() {
   local unit="$1"
   if systemctl list-unit-files "$unit" --no-legend >/dev/null 2>&1; then
@@ -26,10 +32,19 @@ enable_if_present gdm.service
 enable_if_present xleax-gpu-boost.service
 enable_if_present ananicy-cpp.service
 enable_if_present scx_loader.service
+enable_if_present libvirtd.service
+enable_if_present virtlogd.socket
+enable_if_present virtlockd.socket
 enable_if_present snapper-cleanup.timer
 enable_if_present grub-btrfs.path
 enable_if_present btrfs-scrub@-.timer
 enable_user_if_present xleax-ghost.service
+
+for pkg in gnome-software epiphany yelp; do
+  if pacman -Q "$pkg" >/dev/null 2>&1; then
+    pacman -Rns --noconfirm "$pkg" || true
+  fi
+done
 
 cat > /etc/locale.gen <<'EOF'
 en_US.UTF-8 UTF-8

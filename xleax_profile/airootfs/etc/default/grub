@@ -2,5 +2,5 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=1
 GRUB_TIMEOUT_STYLE=menu
 GRUB_DISABLE_SUBMENU=true
-GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.udev.log_priority=3 udev.log_priority=3 systemd.log_level=notice systemd.show_status=auto"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.udev.log_priority=3 udev.log_priority=3 systemd.log_level=notice systemd.show_status=auto iommu=pt intel_iommu=on amd_iommu=on"
 GRUB_CMDLINE_LINUX=""

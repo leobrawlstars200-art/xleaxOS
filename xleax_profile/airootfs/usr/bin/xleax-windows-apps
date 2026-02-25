@@ -1,0 +1,202 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONFIG_FILE="/etc/xleax/windows-apps.conf"
+STATE_FILE="/run/xleax/windows-apps.state"
+VM_NAME="windowsapps"
+VFIO_PCI_DEVICES=""
+AUTO_STOP_DISPLAY_MANAGER=true
+DISPLAY_MANAGER_SERVICE="gdm.service"
+
+if [ -r "$CONFIG_FILE" ]; then
+  # shellcheck disable=SC1090
+  source "$CONFIG_FILE"
+fi
+
+if [ "$(id -u)" -ne 0 ]; then
+  echo "xleax-windows-apps: run as root (use pkexec)." >&2
+  exit 1
+fi
+
+usage() {
+  cat <<'EOF'
+Usage: xleax-windows-apps [start|stop|status] [vm-name]
+EOF
+}
+
+action="${1:-start}"
+case "$action" in
+  start|stop|status) ;;
+  *)
+    usage
+    exit 64
+    ;;
+esac
+
+if [ -n "${2:-}" ]; then
+  VM_NAME="$2"
+fi
+
+get_device_list() {
+  if [ -n "$VFIO_PCI_DEVICES" ]; then
+    printf '%s\n' "$VFIO_PCI_DEVICES" | tr ', ' '\n\n' | awk 'NF' | sort -u
+    return
+  fi
+
+  local dev class bdf audio
+  for dev in /sys/bus/pci/devices/*; do
+    [ -e "$dev/class" ] || continue
+    class="$(cat "$dev/class")"
+    case "$class" in
+      0x030000|0x030200)
+        bdf="$(basename "$dev")"
+        printf '%s\n' "$bdf"
+        audio="${bdf%.*}.1"
+        if [ -e "/sys/bus/pci/devices/$audio/class" ] && grep -qi '^0x0403' "/sys/bus/pci/devices/$audio/class"; then
+          printf '%s\n' "$audio"
+        fi
+        ;;
+    esac
+  done | sort -u
+}
+
+bind_to_vfio() {
+  local bdf="$1" dev="/sys/bus/pci/devices/$bdf" driver
+  [ -d "$dev" ] || return 0
+
+  if [ -L "$dev/driver" ]; then
+    driver="$(basename "$(readlink -f "$dev/driver")")"
+    echo "$bdf" > "/sys/bus/pci/drivers/$driver/unbind" 2>/dev/null || true
+  fi
+
+  echo vfio-pci > "$dev/driver_override"
+  echo "$bdf" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null || true
+}
+
+rebind_from_vfio() {
+  local bdf="$1" dev="/sys/bus/pci/devices/$bdf"
+  [ -d "$dev" ] || return 0
+
+  if [ -L "$dev/driver" ] && [ "$(basename "$(readlink -f "$dev/driver")")" = "vfio-pci" ]; then
+    echo "$bdf" > /sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
+  fi
+
+  : > "$dev/driver_override"
+  echo "$bdf" > /sys/bus/pci/drivers_probe 2>/dev/null || true
+}
+
+disable_local_display() {
+  if [ "$AUTO_STOP_DISPLAY_MANAGER" = true ]; then
+    systemctl stop "$DISPLAY_MANAGER_SERVICE" 2>/dev/null || true
+  fi
+  for vt in /sys/class/vtconsole/vtcon*/bind; do
+    echo 0 > "$vt" 2>/dev/null || true
+  done
+  if [ -e /sys/bus/platform/drivers/efi-framebuffer/unbind ]; then
+    echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind 2>/dev/null || true
+  fi
+}
+
+restore_local_display() {
+  if [ -e /sys/bus/platform/drivers/efi-framebuffer/bind ]; then
+    echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/bind 2>/dev/null || true
+  fi
+  for vt in /sys/class/vtconsole/vtcon*/bind; do
+    echo 1 > "$vt" 2>/dev/null || true
+  done
+  if [ "$AUTO_STOP_DISPLAY_MANAGER" = true ]; then
+    systemctl start "$DISPLAY_MANAGER_SERVICE" 2>/dev/null || true
+  fi
+}
+
+start_vm() {
+  local devices
+  mapfile -t devices < <(get_device_list)
+  if [ "${#devices[@]}" -eq 0 ]; then
+    echo "xleax-windows-apps: no passthrough GPU devices detected." >&2
+    exit 2
+  fi
+
+  modprobe vfio
+  modprobe vfio_iommu_type1
+  modprobe vfio-pci
+
+  disable_local_display
+
+  : > "$STATE_FILE"
+  printf 'VM_NAME=%s\n' "$VM_NAME" >> "$STATE_FILE"
+  printf 'DEVICES=%s\n' "${devices[*]}" >> "$STATE_FILE"
+
+  local bdf
+  for bdf in "${devices[@]}"; do
+    bind_to_vfio "$bdf"
+  done
+
+  virsh start "$VM_NAME"
+  echo "xleax-windows-apps: VM $VM_NAME started with VFIO GPU passthrough."
+}
+
+stop_vm() {
+  local state_vm="$VM_NAME" state_devices="" bdf
+
+  if [ -r "$STATE_FILE" ]; then
+    # shellcheck disable=SC1090
+    source "$STATE_FILE"
+    state_vm="${VM_NAME:-$state_vm}"
+    state_devices="${DEVICES:-}"
+  fi
+
+  if virsh domstate "$state_vm" 2>/dev/null | grep -qi running; then
+    virsh shutdown "$state_vm" || true
+    for _ in $(seq 1 30); do
+      if ! virsh domstate "$state_vm" 2>/dev/null | grep -qi running; then
+        break
+      fi
+      sleep 2
+    done
+    if virsh domstate "$state_vm" 2>/dev/null | grep -qi running; then
+      virsh destroy "$state_vm" || true
+    fi
+  fi
+
+  if [ -n "$state_devices" ]; then
+    for bdf in $state_devices; do
+      rebind_from_vfio "$bdf"
+    done
+  else
+    while IFS= read -r bdf; do
+      rebind_from_vfio "$bdf"
+    done < <(get_device_list)
+  fi
+
+  restore_local_display
+  rm -f "$STATE_FILE"
+  echo "xleax-windows-apps: VM stopped and devices rebound to host."
+}
+
+print_status() {
+  echo "VM: $VM_NAME"
+  virsh domstate "$VM_NAME" 2>/dev/null || echo "domstate: unavailable"
+
+  echo "GPU passthrough devices:"
+  while IFS= read -r bdf; do
+    [ -z "$bdf" ] && continue
+    if [ -L "/sys/bus/pci/devices/$bdf/driver" ]; then
+      printf '  %s -> %s\n' "$bdf" "$(basename "$(readlink -f "/sys/bus/pci/devices/$bdf/driver")")"
+    else
+      printf '  %s -> (unbound)\n' "$bdf"
+    fi
+  done < <(get_device_list)
+}
+
+case "$action" in
+  start)
+    start_vm
+    ;;
+  stop)
+    stop_vm
+    ;;
+  status)
+    print_status
+    ;;
+esac

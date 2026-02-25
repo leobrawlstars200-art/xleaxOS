@@ -101,6 +101,23 @@ jobs:
               resolve_or_drop_pkg snap-pac snap-pac-git
               resolve_or_drop_pkg grub-btrfs
               resolve_or_drop_pkg btrfs-progs
+              resolve_or_drop_pkg gnome-shell-extension-dash-to-panel dash-to-panel gnome-shell-extension-dash-to-panel-git
+              resolve_or_drop_pkg gnome-shell-extension-arc-menu gnome-shell-extension-arcmenu gnome-shell-extension-arc-menu-git arcmenu
+              resolve_or_drop_pkg gnome-shell-extension-appindicator gnome-shell-extension-appindicator-git
+              resolve_or_drop_pkg gnome-shell-extension-user-theme
+              resolve_or_drop_pkg adw-gtk3 adw-gtk-theme
+              resolve_or_drop_pkg qemu-full qemu-desktop qemu-base qemu
+              resolve_or_drop_pkg libvirt
+              resolve_or_drop_pkg virt-manager
+              resolve_or_drop_pkg ovmf edk2-ovmf
+              resolve_or_drop_pkg dnsmasq
+              resolve_or_drop_pkg bridge-utils
+              resolve_or_drop_pkg linux-firmware
+              resolve_or_drop_pkg sof-firmware
+              resolve_or_drop_pkg alsa-firmware
+              resolve_or_drop_pkg intel-ucode
+              resolve_or_drop_pkg amd-ucode
+              resolve_or_drop_pkg fwupd
 
               # Build-time pacman profile for non-v4 GitHub runners.
               printf "%s\n" \
@@ -133,15 +150,15 @@ jobs:
               mkarchiso -v -w /tmp/archiso-work -o /work/out /tmp/xleax_profile
               iso_path="$(find /work/out -maxdepth 1 -type f -name "*.iso" | head -n1)"
               test -n "$iso_path"
-              cp "$iso_path" /work/out/xleaxOS_v1_GoldMaster.iso
-              sha256sum /work/out/xleaxOS_v1_GoldMaster.iso > /work/out/xleaxOS_v1_GoldMaster.iso.sha256
+              cp "$iso_path" /work/out/xleaxOS_Ultimate_RC.iso
+              sha256sum /work/out/xleaxOS_Ultimate_RC.iso > /work/out/xleaxOS_Ultimate_RC.iso.sha256
             '
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
-          name: xleaxos-v1-goldmaster
+          name: xleaxos-ultimate-rc
           path: |
-            out/xleaxOS_v1_GoldMaster.iso
-            out/xleaxOS_v1_GoldMaster.iso.sha256
+            out/xleaxOS_Ultimate_RC.iso
+            out/xleaxOS_Ultimate_RC.iso.sha256
           if-no-files-found: error
