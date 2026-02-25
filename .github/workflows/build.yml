@@ -23,7 +23,7 @@ jobs:
             -w /work \
             archlinux:latest /bin/bash -lc '
               set -euo pipefail
-              pacman -Syu --noconfirm archiso
+              pacman -Syu --noconfirm archiso grub
               cp -a /usr/share/archiso/configs/baseline /tmp/xleax_profile
               cp -a /work/xleax_profile/. /tmp/xleax_profile/
               mkarchiso -v -w /tmp/archiso-work -o /work/out /tmp/xleax_profile
