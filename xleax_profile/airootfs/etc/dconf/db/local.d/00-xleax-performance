@@ -1,0 +1,5 @@
+[org/gnome/desktop/interface]
+enable-animations=false
+
+[org/gnome/mutter]
+experimental-features=['kms-modifiers']

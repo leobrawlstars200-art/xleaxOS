@@ -3,6 +3,11 @@ linux-cachyos-bore
 base-devel
 syslinux
 grub
+mkinitcpio
+mkinitcpio-archiso
+gnome
+gdm
+mutter-performance
 cachyos-keyring
 cachyos-mirrorlist
 cachyos-v4-mirrorlist

@@ -1,0 +1,2 @@
+CLUTTER_PAINT=disable-clipped-redraw-bin
+MUTTER_DEBUG_ENABLE_ATOMIC_KMS=1
