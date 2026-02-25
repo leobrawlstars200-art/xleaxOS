@@ -18,5 +18,14 @@ tap-to-click=true
 two-finger-scrolling-enabled=true
 click-method='fingers'
 
+[org/gnome/desktop/background]
+picture-uri='file:///usr/share/backgrounds/xleaxos-goldmaster.svg'
+picture-uri-dark='file:///usr/share/backgrounds/xleaxos-goldmaster.svg'
+picture-options='zoom'
+
+[org/gnome/desktop/screensaver]
+picture-uri='file:///usr/share/backgrounds/xleaxos-goldmaster.svg'
+picture-options='zoom'
+
 [org/gnome/shell]
 favorite-apps=['install-xleax.desktop','org.gnome.Terminal.desktop','org.gnome.Nautilus.desktop','org.gnome.Settings.desktop']

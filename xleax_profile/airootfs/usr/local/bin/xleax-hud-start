@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+sleep 2
+pkill -f 'conky -c /etc/conky/xleax-hud.conf' >/dev/null 2>&1 || true
+exec conky -c /etc/conky/xleax-hud.conf

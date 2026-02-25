@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly WHITELIST_REGEX='^(discord|Discord|obs|obs64|firefox|chrome|chromium|brave|spotify)$'
+readonly WHITELIST_REGEX='^(discord|Discord|obs|obs64|obs-studio|firefox|chrome|chromium|brave|Brave-browser|spotify|Spotify)$'
 readonly USER_ID="$(id -u)"
 readonly RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/${USER_ID}}"
 readonly STATUS_FILE="${RUNTIME_DIR}/xleax-ghost.status"
