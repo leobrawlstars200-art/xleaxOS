@@ -35,30 +35,32 @@ jobs:
                 done
               }
 
-              pacman -Syu --noconfirm archlinux-keyring curl gnupg archiso grub
-              pacman-key --init
-              pacman-key --populate archlinux
               cp /etc/pacman.conf /tmp/bootstrap-nosig.conf
               sed -i "s/^SigLevel.*/SigLevel = Never/" /tmp/bootstrap-nosig.conf
               sed -i "s/^LocalFileSigLevel.*/LocalFileSigLevel = Never/" /tmp/bootstrap-nosig.conf
+              retry pacman -Sy --noconfirm --config /tmp/bootstrap-nosig.conf archlinux-keyring
+              retry pacman -Syu --noconfirm archlinux-keyring curl gnupg archiso grub
+              pacman-key --init
+              pacman-key --populate archlinux
 
-              cachyos_index="$(curl -fsSL https://mirror.cachyos.org/repo/x86_64/cachyos/)"
+              cachyos_index="$(retry curl -fsSL https://mirror.cachyos.org/repo/x86_64/cachyos/)"
               cachyos_keyring_pkg="$(printf "%s" "$cachyos_index" | grep -o "cachyos-keyring-[^\" ]*pkg\\.tar\\.zst" | head -n1)"
               cachyos_mirrorlist_pkg="$(printf "%s" "$cachyos_index" | grep -o "cachyos-mirrorlist-[^\" ]*pkg\\.tar\\.zst" | head -n1)"
               cachyos_v4_mirrorlist_pkg="$(printf "%s" "$cachyos_index" | grep -o "cachyos-v4-mirrorlist-[^\" ]*pkg\\.tar\\.zst" | head -n1)"
               test -n "$cachyos_keyring_pkg"
               test -n "$cachyos_mirrorlist_pkg"
               test -n "$cachyos_v4_mirrorlist_pkg"
-              pacman -U --noconfirm --config /tmp/bootstrap-nosig.conf \
+              retry pacman -U --noconfirm --config /tmp/bootstrap-nosig.conf \
                 "https://mirror.cachyos.org/repo/x86_64/cachyos/${cachyos_keyring_pkg}" \
                 "https://mirror.cachyos.org/repo/x86_64/cachyos/${cachyos_mirrorlist_pkg}" \
                 "https://mirror.cachyos.org/repo/x86_64/cachyos/${cachyos_v4_mirrorlist_pkg}"
-              pacman-key --populate cachyos
+              pacman-key --populate cachyos || true
 
-              pacman -U --noconfirm --config /tmp/bootstrap-nosig.conf \
+              retry pacman -U --noconfirm --config /tmp/bootstrap-nosig.conf \
                 "https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst" \
                 "https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst"
-              pacman-key --populate chaotic
+              pacman-key --populate chaotic || true
+              retry pacman -Sy --noconfirm
 
               cp -a /usr/share/archiso/configs/baseline /tmp/xleax_profile
               cp -a /work/xleax_profile/. /tmp/xleax_profile/
