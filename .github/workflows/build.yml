@@ -85,6 +85,9 @@ jobs:
               resolve_or_drop_pkg qt5-svg qt5-base
               resolve_or_drop_pkg qt5-xmlpatterns qt5-tools
               resolve_or_drop_pkg polkit-gnome lxqt-policykit polkit
+              resolve_or_drop_pkg ananicy-cpp ananicy-cpp-git
+              resolve_or_drop_pkg ananicy-cpp-rules ananicy-rules-git ananicy-cpp-rules-git
+              resolve_or_drop_pkg scx-scheds scx-scheds-git scx
 
               # Build-time pacman profile for non-v4 GitHub runners.
               printf "%s\n" \

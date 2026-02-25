@@ -1,0 +1,23 @@
+{
+  "name": "tracker-miner-fs-3",
+  "nice": 19,
+  "ioclass": "idle"
+}
+
+{
+  "name": "tracker-miner-rss-3",
+  "nice": 19,
+  "ioclass": "idle"
+}
+
+{
+  "name": "tracker-extract-3",
+  "nice": 19,
+  "ioclass": "idle"
+}
+
+{
+  "name": "tracker-writeback-3",
+  "nice": 19,
+  "ioclass": "idle"
+}

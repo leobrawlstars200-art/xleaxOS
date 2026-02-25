@@ -1,0 +1,7 @@
+{
+  "name": "xleax-all-games",
+  "type": "Game",
+  "nice": -20,
+  "ioclass": "realtime",
+  "sched": "fifo"
+}
