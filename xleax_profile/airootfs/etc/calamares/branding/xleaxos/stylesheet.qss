@@ -1,0 +1,51 @@
+/* xleaxOS Calamares Deep Carbon theme */
+* {
+  color: #e8edf4;
+  background-color: #111418;
+}
+
+QWidget {
+  background-color: #111418;
+}
+
+QFrame, QGroupBox {
+  background-color: #171b20;
+  border: 1px solid #242b33;
+  border-radius: 8px;
+}
+
+QPushButton {
+  background-color: #0a7bff;
+  color: #f8fbff;
+  border: 1px solid #3b9bff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+}
+
+QPushButton:hover {
+  background-color: #1690ff;
+}
+
+QPushButton:pressed {
+  background-color: #0767d6;
+}
+
+QLineEdit, QComboBox, QTreeView, QListView {
+  background-color: #0c1014;
+  border: 1px solid #2d353f;
+  border-radius: 6px;
+  selection-background-color: #0a7bff;
+  selection-color: #ffffff;
+}
+
+QProgressBar {
+  border: 1px solid #2d353f;
+  border-radius: 6px;
+  text-align: center;
+  background-color: #0c1014;
+}
+
+QProgressBar::chunk {
+  background-color: #0a7bff;
+}

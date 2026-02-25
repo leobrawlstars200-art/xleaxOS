@@ -1,0 +1,14 @@
+---
+componentName: xleaxos
+welcomeStyleCalamares: true
+welcomeExpandingLogo: true
+windowExpanding: 800x520
+productName: xleaxOS
+shortProductName: xleaxOS
+version: rolling
+shortVersion: rolling
+versionedName: xleaxOS rolling
+shortVersionedName: xleaxOS
+bootloaderEntryName: xleaxOS
+imagesDir: "/etc/calamares/branding/xleaxos"
+styleSheet: "/etc/calamares/branding/xleaxos/stylesheet.qss"
