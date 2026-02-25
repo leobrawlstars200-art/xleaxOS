@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly WHITELIST_REGEX='^(discord|Discord|obs|obs64|firefox|chrome|chromium|brave|spotify)$'
+readonly USER_ID="$(id -u)"
+readonly RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/${USER_ID}}"
+readonly STATUS_FILE="${RUNTIME_DIR}/xleax-ghost.status"
+readonly POLL_SECS=2
+
+TARGET_PATTERNS=(
+  "gnome-software"
+  "packagekit"
+  "packagekitd"
+  "tracker-miner-f"
+  "tracker-miner-fs"
+  "tracker-miner-rss"
+  "tracker-extract"
+  "tracker-writeback"
+  "evolution-calendar-factory"
+)
+
+declare -A FROZEN_PIDS=()
+
+touch "$STATUS_FILE"
+printf '%s\n' "Idle" > "$STATUS_FILE"
+
+is_fullscreen_focused() {
+  local eval_js out
+  eval_js='(() => { const w = global.display.get_focus_window(); return w ? w.is_fullscreen() : false; })();'
+  out="$(gdbus call --session \
+    --dest org.gnome.Shell \
+    --object-path /org/gnome/Shell \
+    --method org.gnome.Shell.Eval \
+    "$eval_js" 2>/dev/null || true)"
+  [[ "$out" == *"true"* ]]
+}
+
+is_game_runtime_present() {
+  pgrep -u "$USER_ID" -f 'gamescope|steam_app_[0-9]+|gamemoderun|proton|wine64-preloader|wine-preloader|lutris|heroic' >/dev/null 2>&1
+}
+
+should_activate_ghost() {
+  if is_game_runtime_present; then
+    return 0
+  fi
+  if is_fullscreen_focused; then
+    return 0
+  fi
+  return 1
+}
+
+signal_targets() {
+  local signal="$1"
+  local pattern pid comm
+
+  for pattern in "${TARGET_PATTERNS[@]}"; do
+    while IFS= read -r pid; do
+      [ -z "$pid" ] && continue
+      comm="$(ps -p "$pid" -o comm= 2>/dev/null | awk '{print $1}' || true)"
+      [ -z "$comm" ] && continue
+      if [[ "$comm" =~ $WHITELIST_REGEX ]]; then
+        continue
+      fi
+      if kill -0 "$pid" 2>/dev/null; then
+        kill "-$signal" "$pid" 2>/dev/null || true
+        if [ "$signal" = "STOP" ]; then
+          FROZEN_PIDS["$pid"]="$comm"
+        else
+          unset "FROZEN_PIDS[$pid]" 2>/dev/null || true
+        fi
+      fi
+    done < <(pgrep -u "$USER_ID" -f "$pattern" 2>/dev/null || true)
+  done
+}
+
+resume_frozen() {
+  local pid
+  for pid in "${!FROZEN_PIDS[@]}"; do
+    if kill -0 "$pid" 2>/dev/null; then
+      kill -CONT "$pid" 2>/dev/null || true
+    fi
+    unset "FROZEN_PIDS[$pid]" 2>/dev/null || true
+  done
+}
+
+cleanup() {
+  resume_frozen
+  printf '%s\n' "Idle" > "$STATUS_FILE"
+}
+trap cleanup EXIT INT TERM
+
+ghost_active=0
+while :; do
+  if should_activate_ghost; then
+    if [ "$ghost_active" -eq 0 ]; then
+      signal_targets STOP
+      printf '%s\n' "Active" > "$STATUS_FILE"
+      ghost_active=1
+    fi
+  else
+    if [ "$ghost_active" -eq 1 ]; then
+      resume_frozen
+      printf '%s\n' "Idle" > "$STATUS_FILE"
+      ghost_active=0
+    fi
+  fi
+  sleep "$POLL_SECS"
+done

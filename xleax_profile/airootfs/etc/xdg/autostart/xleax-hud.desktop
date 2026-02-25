@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=xleaxOS X-HUD
+Comment=Launch the xleaxOS performance HUD overlay
+Exec=conky -c /etc/conky/xleax-hud.conf
+Terminal=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
