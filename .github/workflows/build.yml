@@ -38,11 +38,9 @@ jobs:
               pacman -Syu --noconfirm archlinux-keyring curl gnupg archiso grub
               pacman-key --init
               pacman-key --populate archlinux
-              printf "%s\n" \
-                "[options]" \
-                "SigLevel = Never" \
-                "LocalFileSigLevel = Never" \
-                > /tmp/bootstrap-nosig.conf
+              cp /etc/pacman.conf /tmp/bootstrap-nosig.conf
+              sed -i "s/^SigLevel.*/SigLevel = Never/" /tmp/bootstrap-nosig.conf
+              sed -i "s/^LocalFileSigLevel.*/LocalFileSigLevel = Never/" /tmp/bootstrap-nosig.conf
 
               cachyos_index="$(curl -fsSL https://mirror.cachyos.org/repo/x86_64/cachyos/)"
               cachyos_keyring_pkg="$(printf "%s" "$cachyos_index" | grep -o "cachyos-keyring-[^\" ]*pkg\\.tar\\.zst" | head -n1)"
