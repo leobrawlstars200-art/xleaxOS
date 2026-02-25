@@ -65,17 +65,26 @@ jobs:
               cp -a /work/xleax_profile/. /tmp/xleax_profile/
               rm -f /tmp/xleax_profile/airootfs/etc/mkinitcpio.d/linux.preset || true
 
-              sed -i "s/^mesa-git$/mesa-tkg-git/" /tmp/xleax_profile/packages.x86_64
-              if ! pacman -Sp --noconfirm calamares >/dev/null 2>&1; then
-                if pacman -Sp --noconfirm calamares-git >/dev/null 2>&1; then
-                  sed -i "s/^calamares$/calamares-git/" /tmp/xleax_profile/packages.x86_64
+              resolve_or_drop_pkg() {
+                local pkg="$1"
+                shift
+                if pacman -Sp --noconfirm "$pkg" >/dev/null 2>&1; then
+                  return 0
                 fi
-              fi
-              if ! pacman -Sp --noconfirm qt5-xmlpatterns >/dev/null 2>&1; then
-                if pacman -Sp --noconfirm qt5-tools >/dev/null 2>&1; then
-                  sed -i "s/^qt5-xmlpatterns$/qt5-tools/" /tmp/xleax_profile/packages.x86_64
-                fi
-              fi
+                for alt in "$@"; do
+                  if pacman -Sp --noconfirm "$alt" >/dev/null 2>&1; then
+                    sed -i "s/^${pkg}$/${alt}/" /tmp/xleax_profile/packages.x86_64
+                    return 0
+                  fi
+                done
+                sed -i "/^${pkg}$/d" /tmp/xleax_profile/packages.x86_64
+              }
+
+              resolve_or_drop_pkg mesa-git mesa-tkg-git
+              resolve_or_drop_pkg calamares calamares-git
+              resolve_or_drop_pkg qt5-svg qt5-base
+              resolve_or_drop_pkg qt5-xmlpatterns qt5-tools
+              resolve_or_drop_pkg polkit-gnome lxqt-policykit polkit
 
               # Build-time pacman profile for non-v4 GitHub runners.
               printf "%s\n" \
