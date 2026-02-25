@@ -3,3 +3,8 @@ linux-cachyos-bore
 base-devel
 syslinux
 grub
+cachyos-keyring
+cachyos-mirrorlist
+cachyos-v4-mirrorlist
+chaotic-keyring
+chaotic-mirrorlist

@@ -63,6 +63,7 @@ jobs:
 
               cp -a /usr/share/archiso/configs/baseline /tmp/xleax_profile
               cp -a /work/xleax_profile/. /tmp/xleax_profile/
+              rm -f /tmp/xleax_profile/airootfs/etc/mkinitcpio.d/linux.preset || true
 
               # Build-time pacman profile for non-v4 GitHub runners.
               printf "%s\n" \
