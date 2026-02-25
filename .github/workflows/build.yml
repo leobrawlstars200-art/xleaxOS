@@ -10,7 +10,7 @@ jobs:
   build-iso:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout
@@ -169,3 +169,14 @@ jobs:
             out/xleaxOS_Ultimate_RC.iso
             out/xleaxOS_Ultimate_RC.iso.sha256
           if-no-files-found: error
+
+      - name: Publish ISO to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: xleaxos-ultimate-rc-${{ github.run_number }}
+          name: xleaxOS Ultimate RC ${{ github.run_number }}
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            out/xleaxOS_Ultimate_RC.iso
+            out/xleaxOS_Ultimate_RC.iso.sha256
