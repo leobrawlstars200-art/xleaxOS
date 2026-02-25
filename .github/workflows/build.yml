@@ -1,0 +1,37 @@
+name: Build xleaxOS ISO
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build ISO in Arch container
+        run: |
+          docker run --rm --privileged \
+            -v "${{ github.workspace }}:/work" \
+            -w /work \
+            archlinux:latest /bin/bash -lc '
+              set -euo pipefail
+              pacman -Syu --noconfirm archiso
+              cp -a /usr/share/archiso/configs/baseline /tmp/xleax_profile
+              cp -a /work/xleax_profile/. /tmp/xleax_profile/
+              mkarchiso -v -w /tmp/archiso-work -o /work/out /tmp/xleax_profile
+            '
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xleaxos-iso
+          path: out/*.iso
+          if-no-files-found: error
