@@ -66,6 +66,16 @@ jobs:
               rm -f /tmp/xleax_profile/airootfs/etc/mkinitcpio.d/linux.preset || true
 
               sed -i "s/^mesa-git$/mesa-tkg-git/" /tmp/xleax_profile/packages.x86_64
+              if ! pacman -Sp --noconfirm calamares >/dev/null 2>&1; then
+                if pacman -Sp --noconfirm calamares-git >/dev/null 2>&1; then
+                  sed -i "s/^calamares$/calamares-git/" /tmp/xleax_profile/packages.x86_64
+                fi
+              fi
+              if ! pacman -Sp --noconfirm qt5-xmlpatterns >/dev/null 2>&1; then
+                if pacman -Sp --noconfirm qt5-tools >/dev/null 2>&1; then
+                  sed -i "s/^qt5-xmlpatterns$/qt5-tools/" /tmp/xleax_profile/packages.x86_64
+                fi
+              fi
 
               # Build-time pacman profile for non-v4 GitHub runners.
               printf "%s\n" \
