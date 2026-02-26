@@ -1,5 +1,5 @@
 [Unit]
-Description=xleaxOS x86-64-v4 runtime validation
+Description=EpsteinOS x86-64-v4 runtime validation
 
 [Service]
 Type=oneshot

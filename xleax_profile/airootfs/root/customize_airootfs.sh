@@ -1,15 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! id -u arch >/dev/null 2>&1; then
-  useradd -m -s /bin/bash -G wheel,audio,video,input,storage,optical arch
+LIVE_USER="epstein"
+LIVE_PASSWORD="epstein"
+
+if ! id -u "$LIVE_USER" >/dev/null 2>&1; then
+  if id -u arch >/dev/null 2>&1; then
+    usermod -l "$LIVE_USER" -d "/home/${LIVE_USER}" -m arch || true
+    if getent group arch >/dev/null 2>&1 && ! getent group "$LIVE_USER" >/dev/null 2>&1; then
+      groupmod -n "$LIVE_USER" arch || true
+    fi
+  else
+    useradd -m -s /bin/bash -G wheel,audio,video,input,storage,optical -c "Epstein" "$LIVE_USER"
+  fi
 fi
 
-echo "arch:arch" | chpasswd
+echo "${LIVE_USER}:${LIVE_PASSWORD}" | chpasswd
+usermod -c "Epstein" "$LIVE_USER" || true
 
-for grp in libvirt kvm; do
+for grp in wheel audio video input storage optical libvirt kvm; do
   if getent group "$grp" >/dev/null 2>&1; then
-    usermod -aG "$grp" arch || true
+    usermod -aG "$grp" "$LIVE_USER" || true
   fi
 done
 

@@ -35,7 +35,7 @@ fi
 
 if ! release_json="$(retry curl -fsSL \
   -H 'Accept: application/vnd.github+json' \
-  -H 'User-Agent: xleaxOS-proton-setup' \
+  -H 'User-Agent: EpsteinOS-proton-setup' \
   "$repo_api")"; then
   echo "xleax-proton-setup: release lookup failed, skipping for this session." >&2
   exit 0

@@ -1,4 +1,4 @@
-name: Build xleaxOS ISO
+name: Build EpsteinOS ISO
 
 on:
   push:
@@ -157,26 +157,26 @@ jobs:
               mkarchiso -v -w /tmp/archiso-work -o /work/out /tmp/xleax_profile
               iso_path="$(find /work/out -maxdepth 1 -type f -name "*.iso" | head -n1)"
               test -n "$iso_path"
-              cp "$iso_path" /work/out/xleaxOS_Ultimate_RC.iso
-              sha256sum /work/out/xleaxOS_Ultimate_RC.iso > /work/out/xleaxOS_Ultimate_RC.iso.sha256
+              cp "$iso_path" /work/out/EpsteinOS_Ultimate_RC.iso
+              sha256sum /work/out/EpsteinOS_Ultimate_RC.iso > /work/out/EpsteinOS_Ultimate_RC.iso.sha256
             '
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
-          name: xleaxos-ultimate-rc
+          name: epsteinos-ultimate-rc
           path: |
-            out/xleaxOS_Ultimate_RC.iso
-            out/xleaxOS_Ultimate_RC.iso.sha256
+            out/EpsteinOS_Ultimate_RC.iso
+            out/EpsteinOS_Ultimate_RC.iso.sha256
           if-no-files-found: error
 
       - name: Publish ISO to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: xleaxos-ultimate-rc-${{ github.run_number }}
-          name: xleaxOS Ultimate RC ${{ github.run_number }}
+          tag_name: epsteinos-ultimate-rc-${{ github.run_number }}
+          name: EpsteinOS Ultimate RC ${{ github.run_number }}
           prerelease: true
           generate_release_notes: true
           files: |
-            out/xleaxOS_Ultimate_RC.iso
-            out/xleaxOS_Ultimate_RC.iso.sha256
+            out/EpsteinOS_Ultimate_RC.iso
+            out/EpsteinOS_Ultimate_RC.iso.sha256

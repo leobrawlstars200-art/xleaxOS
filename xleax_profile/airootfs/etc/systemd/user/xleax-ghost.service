@@ -1,5 +1,5 @@
 [Unit]
-Description=xleaxOS Smart Ghost-Mode daemon
+Description=EpsteinOS Smart Ghost-Mode daemon
 PartOf=graphical-session.target
 After=graphical-session.target
 

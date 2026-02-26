@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=xleaxOS X-HUD
-Comment=Launch the xleaxOS performance HUD overlay
+Name=EpsteinOS X-HUD
+Comment=Launch the EpsteinOS performance HUD overlay
 Exec=/usr/local/bin/xleax-hud-start
 Terminal=false
 NoDisplay=false

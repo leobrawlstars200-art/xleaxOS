@@ -5,7 +5,7 @@ Type = Package
 Target = *
 
 [Action]
-Description = xleaxOS safety snapshot before pacman transaction
+Description = EpsteinOS safety snapshot before pacman transaction
 When = PreTransaction
 Exec = /usr/local/bin/xleax-pretransaction-snapshot
 Depends = snapper

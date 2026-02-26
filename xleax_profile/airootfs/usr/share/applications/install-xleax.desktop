@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=Install xleaxOS
-Comment=Launch the xleaxOS installer
+Name=Install EpsteinOS
+Comment=Launch the EpsteinOS installer
 Exec=pkexec calamares
 Icon=drive-harddisk
 Terminal=false

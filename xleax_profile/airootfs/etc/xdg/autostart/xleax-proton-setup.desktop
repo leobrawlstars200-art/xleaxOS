@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=xleaxOS Proton-GE Setup
+Name=EpsteinOS Proton-GE Setup
 Comment=Install latest Proton-GE for Steam on first session
 Exec=/usr/local/bin/xleax-proton-setup
 Terminal=false

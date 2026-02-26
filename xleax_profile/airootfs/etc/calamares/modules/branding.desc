@@ -3,12 +3,12 @@ componentName: xleaxos
 welcomeStyleCalamares: true
 welcomeExpandingLogo: true
 windowExpanding: 800x520
-productName: xleaxOS
-shortProductName: xleaxOS
+productName: EpsteinOS
+shortProductName: EpsteinOS
 version: rolling
 shortVersion: rolling
-versionedName: xleaxOS rolling
-shortVersionedName: xleaxOS
-bootloaderEntryName: xleaxOS
+versionedName: EpsteinOS rolling
+shortVersionedName: EpsteinOS
+bootloaderEntryName: EpsteinOS
 imagesDir: "/etc/calamares/branding/xleaxos"
 styleSheet: "/etc/calamares/branding/xleaxos/stylesheet.qss"
